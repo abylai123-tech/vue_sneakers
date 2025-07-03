@@ -1,23 +1,70 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, reactive, watch } from "vue";
 import axios from "axios";
 
 import Header from "./components/Header.vue";
 import CardList from "./components/CardList.vue";
 import Drawer from "./components/Drawer.vue";
 
-const items = ref([]); // { value: []}
-s
-onMounted(async() => {
-  try {
-    const { data } = await axios.get('https://604781a0efa572c1.mokky.dev/items')
+const items = ref([]); 
 
-    items.value = data;
+
+const filters = reactive({
+  sortBy: 'title',
+  searchQuery: '',
+})
+
+const onChangeSelect = (event)  => {
+  filters.sortBy = event.target.value
+}
+
+const onChangeSearchInput = (event) => {
+  filters.searchQuery = event.target.value 
+}
+
+const fetchFavorites = async () => {
+    try {
+      const { data: favorites } = await axios.get(`https://604781a0efa572c1.mokky.dev/favorites`)
+      
+      items.value = items.value.map(item => {
+
+      });
   } catch(err) {
     console.log(err);
   }
+}
+ 
+const fetchItems = async () => {
+  try {
+    const params = {
+      sortBy: filters.sortBy,
+    }
+
+    if (filters.searchQuery) {
+      params.title = `*${filters.searchQuery}*`;
+    }
+
+    const { data } = await axios.get(
+      `https://604781a0efa572c1.mokky.dev/items`,
+      {
+        params 
+      }
+    )
+    items.value = data.map(obj => ({
+      ...obj,
+      isFavorite: false, 
+      isAdded: false
+    }));
+  } catch(err) {
+    console.log(err);
+  }
+}
+
+onMounted(async () => {
+  await fetchItems();
+  await fetchFavorites();
 })
-`1`
+watch(filters, fetchItems)
 </script>
 
 <template>
@@ -31,10 +78,10 @@ onMounted(async() => {
         <h2 class="text-3xl font-bold">Все кроссовки</h2>
 
         <div class="flex gap-4">
-          <select class="py-2 px-3 border rounded-md mb-4">
-            <option>По названию</option>
-            <option>По цене (дешевые)</option>
-            <option>По цене (дорогие)</option>
+          <select @change="onChangeSelect" class="py-2 px-3 border rounded-md mb-4">
+            <option value="name">По названию</option>
+            <option value="price">По цене (дешевые)</option>
+            <option value="-price">По цене (дорогие)</option>
           </select>
 
           <div class="relative">
@@ -43,6 +90,7 @@ onMounted(async() => {
               class="absolute left-4 top-3"
             />
             <input 
+              @change="onChangeSearchInput"
               class="border rounded-md py-2 pl-11 pr-4 outline-none focus:border-gray-400 mb-3"
               type="text"
               placeholder="Поиск..."
