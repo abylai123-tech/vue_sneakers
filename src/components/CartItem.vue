@@ -1,4 +1,15 @@
 <script setup>
+defineProps({
+    id: Number,
+    title: String,
+    imageUrl: String,
+    price: Number,
+    isFavorite: Boolean,
+    isAdded: Boolean,
+    onClickFavorite: Function,
+    onClickAdd: Function
+})
+
 
 </script>
 
@@ -8,7 +19,7 @@
         <img class="w-16 h-16" src="/sneakers/sneakers-1.jpg" alt="Sneaker"/>
 
         <div class="flex flex-col">
-            <p>Кроссовки Nike Air Max 270 </p>
+            <p>{{ title }} </p>
 
             <div class="flex justify-between mt-2">
                 <b>12990 руб.</b>

@@ -1,14 +1,12 @@
 <script setup>
-import DrawerHead from './DrawerHead.vue';
+import { inject } from 'vue';
 import CartItem from './CartItem.vue';
-</script>
 
+const { cart } = inject('cart');
+</script>
+ 
 <template>
     <div class="flex flex-col flex-1 gap-4 justify-between">
-       <CartItem/>
-       <CartItem/>
-       <CartItem/>
-       <CartItem/>
-       <CartItem/>
+       <CartItem v-for="item in cart" :key="item.id"/>
     </div>
 </template>
