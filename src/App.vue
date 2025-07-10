@@ -1,15 +1,18 @@
 <script setup>
-import { onMounted, ref, reactive, provide, watch } from "vue";
+import { onMounted, ref, reactive, provide, watch,  computed} from "vue";
 import axios from "axios";
 
 import Header from "./components/Header.vue";
 import CardList from "./components/CardList.vue";
 import Drawer from "./components/Drawer.vue";
 
-const items = ref([]); 
-const cart = ref([]);
+const items = ref([])
+const cart = ref([])
 
-const drawerOpen = ref(false);
+const drawerOpen = ref(false)
+
+const totalPrice = computed(() => cart.value.reduce((acc, item) => acc + item.price, 0))
+const vatPrice = computed(() => Math.round((totalPrice.value * 5) / 100))
 
 const closeDrawer = () => {
   drawerOpen.value = false;
@@ -25,15 +28,36 @@ const filters = reactive({
 })
 
 const addToCart = (item) => {
-    if (!item.isAdded) {
-      cart.value.push(item)
-      item.isAdded = true;
-    } else {
-      cart.value.splice(cart.value.indexOf(item), 1);
-      item.isAdded = false;
-    }
+   cart.value.push(item)
+   item.isAdded = true;
+}
 
-    console.log(cart)
+const removeFromCart = (item) => {
+  cart.value.splice(cart.value.indexOf(item), 1);
+  item.isAdded = false;
+}
+
+const createOrder = async() => {
+  try {
+     const { data } = await axios.post(`https://6c2b072e91f77630.mokky.dev/orders`, {
+        items: cart.value,
+        totalPrice: totalPrice.value
+     })
+
+     cart.value = []
+
+     return data
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+const onClickAddPlus = (item) => {
+    if (!item.isAdded) {
+      addToCart(item);
+    } else {
+      removeFromCart(item);
+    }
 }
 
 const onChangeSelect = (event)  => {
@@ -100,7 +124,7 @@ const fetchItems = async () => {
     }
 
     const { data } = await axios.get(
-      `https://604781a0efa572c1.mokky.dev/items`,
+      `https://6c2b072e91f77630.mokky.dev/items`,
       {
         params 
       }
@@ -125,15 +149,17 @@ watch(filters, fetchItems)
 provide('cart', {
   cart,
   closeDrawer,
-  openDrawer
+  openDrawer,
+  addToCart,
+  removeFromCart,
 });
 </script>
 
 <template>
-  <Drawer v-if="drawerOpen"/>
+  <Drawer v-if="drawerOpen" :total-price="totalPrice" :vat-price="vatPrice" @create-order="createOrder"/>
   
   <div class="bg-white w-4/5 m-auto rounded-xl shadow-xl mt-14">
-    <Header @open-drawer="openDrawer" />
+    <Header :total-price="totalPrice" @open-drawer="openDrawer" />
 
     <div class="p-10">
       <div class="flex justify-between items-center">
@@ -163,7 +189,7 @@ provide('cart', {
       </div>
 
       <div class="mt-10">
-        <CardList :items="items" @add-to-favorite="addToFavorite" @add-to-cart="addToCart"/> 
+        <CardList :items="items" @add-to-favorite="addToFavorite" @add-to-cart="onClickAddPlus" /> 
       </div>
 
     </div>
