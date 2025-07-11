@@ -34,7 +34,3 @@ const emit = defineEmits(['openDrawer']);
       </ul>
     </header>
 </template>
-
-<style>
-
-</style>
